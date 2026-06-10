@@ -1,8 +1,8 @@
-import { IsNotEmpty } from "class-validator";
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
-class sendChatDto {
-    @IsNotEmpty()
-    query: string
+export class SendChatDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  query: string;
 }
-
-export default sendChatDto;

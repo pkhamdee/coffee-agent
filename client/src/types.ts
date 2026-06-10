@@ -30,7 +30,7 @@ export interface SavedOrder {
   size: string | null;
   milk: string | null;
   syrup: string | null;
-  sweeter: string | null;
+  sweetener: string | null;
   toppings: string | null;
   quantity: number;
 }

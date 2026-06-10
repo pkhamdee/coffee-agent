@@ -21,6 +21,6 @@ export async function getOrders(): Promise<SavedOrder[]> {
 }
 
 export async function deliverOrder(id: string): Promise<void> {
-  const res = await fetch(`/api/chats/orders/${id}`, { method: 'DELETE' });
+  const res = await fetch(`/api/chats/orders/${id}/deliver`, { method: 'PATCH' });
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
 }

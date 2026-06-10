@@ -1,10 +1,10 @@
 {
-  "name": "langraph-article-project",
+  "name": "coffee-agent",
   "version": "0.0.1",
-  "description": "",
+  "description": "Conversational AI coffee-ordering demo (NestJS + LangGraph + Ollama)",
   "author": "",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -20,14 +20,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@langchain/community": "^0.3.53",
     "@langchain/core": "^0.3.75",
-    "@langchain/google-genai": "^0.2.16",
     "@langchain/langgraph": "^0.4.8",
     "@langchain/langgraph-checkpoint-mongodb": "^0.1.1",
-    "@langchain/mongodb": "^0.1.0",
     "@langchain/ollama": "^0.2.4",
-    "@langchain/openai": "^0.3.17",
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/mongoose": "^11.0.3",
@@ -35,7 +31,6 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "dotenv": "^17.2.2",
-    "langchain": "^0.3.33",
     "mongodb": "^6.19.0",
     "mongoose": "^8.18.1",
     "reflect-metadata": "^0.2.0",
@@ -75,6 +70,9 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^src/(.*)$": "<rootDir>/$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

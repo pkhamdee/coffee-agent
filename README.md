@@ -240,6 +240,18 @@ Start or continue a conversation. The `threadId` identifies the session — reus
 
 `progress` is either `"in_progress"` or `"completed"`.
 
+### `GET /chats/orders`
+
+Returns all undelivered orders (newest first). Each order includes `name`, `drink`, `size`, `milk`, `syrup`, `sweetener`, `toppings`, `quantity`, and `status` (`"pending"` or `"delivered"`).
+
+### `PATCH /chats/orders/:id/deliver`
+
+Marks an order as delivered. Delivered orders are kept in the database (soft delete) but no longer appear in `GET /chats/orders`.
+
+### `GET /health`
+
+Liveness check — returns `{ "status": "ok" }`.
+
 ---
 
 ## Project Structure

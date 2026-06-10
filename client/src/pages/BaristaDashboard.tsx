@@ -8,7 +8,7 @@ const DETAIL_ROWS: { key: keyof SavedOrder; label: string }[] = [
   { key: 'size', label: 'Size' },
   { key: 'milk', label: 'Milk' },
   { key: 'syrup', label: 'Syrup' },
-  { key: 'sweeter', label: 'Sweetener' },
+  { key: 'sweetener', label: 'Sweetener' },
   { key: 'toppings', label: 'Toppings' },
   { key: 'quantity', label: 'Quantity' },
 ];
@@ -23,11 +23,18 @@ function OrderDetailModal({
   onDeliver: () => Promise<void>;
 }) {
   const [delivering, setDelivering] = useState(false);
+  const [deliverError, setDeliverError] = useState<string | null>(null);
 
   const handleDeliver = async () => {
     setDelivering(true);
-    await onDeliver();
-    setDelivering(false);
+    setDeliverError(null);
+    try {
+      await onDeliver();
+    } catch {
+      setDeliverError('Failed to mark as delivered. Please try again.');
+    } finally {
+      setDelivering(false);
+    }
   };
 
   return (
@@ -74,6 +81,9 @@ function OrderDetailModal({
 
         {/* Deliver button */}
         <div className="px-5 pb-5">
+          {deliverError && (
+            <p className="text-xs text-red-600 mb-2">{deliverError}</p>
+          )}
           <button
             onClick={handleDeliver}
             disabled={delivering}
@@ -100,7 +110,7 @@ function OrderCard({
     order.size,
     order.milk,
     order.syrup,
-    order.sweeter,
+    order.sweetener,
     order.toppings,
   ].filter(Boolean);
 
