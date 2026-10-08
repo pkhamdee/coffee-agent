@@ -34,3 +34,43 @@ export interface SavedOrder {
   toppings: string | null;
   quantity: number;
 }
+
+export interface ModelSettings {
+  baseUrl: string;
+  modelName: string;
+  skipTlsVerify: boolean;
+  hasToken: boolean;
+  source: 'env' | 'setup-page';
+}
+
+export interface ModelSettingsInput {
+  baseUrl: string;
+  modelName: string;
+  skipTlsVerify: boolean;
+  /** Empty = keep the current token. */
+  token: string;
+}
+
+export interface McpSettings {
+  url: string;
+  city: string;
+  skipTlsVerify: boolean;
+  hasApiKey: boolean;
+  source: 'env' | 'setup-page';
+}
+
+export interface McpSettingsInput {
+  url: string;
+  city: string;
+  skipTlsVerify: boolean;
+  /** Empty = keep the current key. */
+  apiKey: string;
+}
+
+export interface WeatherResult {
+  city: string;
+  country: string;
+  temperatureC: number;
+  feelsLikeC: number;
+  condition: string;
+}

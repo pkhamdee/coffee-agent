@@ -1,0 +1,51 @@
+# Weather MCP server — its own image (mcp-weather-server/), deployable separately.
+apiVersion: v1
+kind: Service
+metadata:
+  name: weather-mcp
+  namespace: coffee-agent
+spec:
+  selector:
+    app: weather-mcp
+  ports:
+    - name: http
+      port: 3001
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-mcp
+  namespace: coffee-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: weather-mcp
+  template:
+    metadata:
+      labels:
+        app: weather-mcp
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: weather-mcp
+          image: docker.io/pkhamdee/coffee-agent-weather-mcp:1.1.0
+          env:
+            # Clients must send "Authorization: Bearer <key>". Unset = no auth (not recommended).
+            - name: MCP_WEATHER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  { name: coffee-agent-secret, key: MCP_WEATHER_API_KEY, optional: true }
+          ports:
+            - containerPort: 3001
+          readinessProbe:
+            tcpSocket: { port: 3001 }
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket: { port: 3001 }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 50m, memory: 96Mi }
+            limits: { memory: 256Mi }

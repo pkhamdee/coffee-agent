@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { getOrders, deliverOrder } from '../api';
 import type { SavedOrder } from '../types';
 
@@ -201,6 +202,12 @@ export default function BaristaDashboard() {
           >
             Refresh
           </button>
+          <Link
+          to="/setup"
+          className="text-xs px-3 py-1.5 rounded-full border border-white/30 text-white/70 hover:bg-white/10 transition-colors"
+          >
+          Setup
+          </Link>
         </div>
       </header>
 

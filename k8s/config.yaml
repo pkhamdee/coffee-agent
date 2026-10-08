@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coffee-agent-config
+  namespace: coffee-agent
+data:
+  MODEL_BASE_URL: https://openrouter.ai/api/v1
+  MODEL_NAME: moonshotai/kimi-k3
+  # "true" = skip TLS verification for model calls (self-signed gateways); also on /setup.
+  MODEL_TLS_INSECURE: "false"
+  SHOP_CITY: Bangkok
+  # In-cluster server; point at the external URL if the MCP server is hosted elsewhere.
+  MCP_WEATHER_URL: http://weather-mcp:3001/mcp
+  # "true" = skip TLS verification for MCP calls (self-signed gateways); also on /setup.
+  MCP_WEATHER_TLS_INSECURE: "false"

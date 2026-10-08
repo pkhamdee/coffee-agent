@@ -1,0 +1,23 @@
+{
+  "name": "coffee-agent-weather-mcp",
+  "version": "1.1.0",
+  "description": "Weather MCP server (Open-Meteo) with Bearer API-key auth",
+  "private": true,
+  "license": "UNLICENSED",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "start:stdio": "node dist/server.js --stdio",
+    "dev": "tsc && node dist/server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "dotenv": "^17.2.2",
+    "zod": "^4.1.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.8.0"
+  }
+}

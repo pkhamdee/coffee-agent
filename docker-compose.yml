@@ -1,0 +1,83 @@
+# Run the whole app without Kubernetes:
+#   docker compose up -d            → http://localhost:8080  (/, /barista, /setup)
+#   docker compose up -d --build    → build images from this checkout instead of pulling
+#
+# Values come from .env in this folder (all optional): MODEL_BASE_URL, MODEL_NAME,
+# MODEL_TOKEN, SHOP_CITY, MCP_WEATHER_API_KEY, MONGO_ROOT_USERNAME, MONGO_ROOT_PASSWORD,
+# WEB_PORT. Model token and MCP settings can also be entered on the /setup page.
+name: coffee-agent
+
+services:
+  mongodb:
+    image: mongo:9.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-password123}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Weather MCP server — its own image (mcp-weather-server/), deployable separately.
+  weather-mcp:
+    image: docker.io/pkhamdee/coffee-agent-weather-mcp:1.1.0
+    build: ./mcp-weather-server
+    restart: unless-stopped
+    environment:
+      MCP_WEATHER_API_KEY: ${MCP_WEATHER_API_KEY:-}
+    healthcheck:
+      # Port check (the /mcp endpoint itself needs the API key).
+      test: ["CMD", "node", "-e", "require('net').connect(3001, 'localhost').on('connect', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    # Uncomment to let other MCP clients (Claude Code, Inspector) reach it on the host:
+    # ports:
+    #   - "3001:3001"
+
+  backend:
+    image: docker.io/pkhamdee/coffee-agent-backend:1.1.0
+    build: .
+    restart: unless-stopped
+    environment:
+      MONGO_URI: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-password123}@mongodb:27017/?authSource=admin
+      MODEL_BASE_URL: ${MODEL_BASE_URL:-https://openrouter.ai/api/v1}
+      MODEL_NAME: ${MODEL_NAME:-moonshotai/kimi-k3}
+      MODEL_TOKEN: ${MODEL_TOKEN:-}
+      # "true" = skip TLS verification for model calls (self-signed gateways); also on /setup.
+      MODEL_TLS_INSECURE: ${MODEL_TLS_INSECURE:-false}
+      SHOP_CITY: ${SHOP_CITY:-Bangkok}
+      # Always the in-compose server (the MCP_WEATHER_URL in .env is for local dev).
+      MCP_WEATHER_URL: http://weather-mcp:3001/mcp
+      MCP_WEATHER_API_KEY: ${MCP_WEATHER_API_KEY:-}
+      # "true" = skip TLS verification for MCP calls (self-signed gateways); also on /setup.
+      MCP_WEATHER_TLS_INSECURE: ${MCP_WEATHER_TLS_INSECURE:-false}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      weather-mcp:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    image: docker.io/pkhamdee/coffee-agent-web:1.1.0
+    build: ./client
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:3000
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  mongo_data:

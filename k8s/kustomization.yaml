@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - config.yaml
+  - secret.yaml # create from secret.example.yaml (git-ignored)
+  - mongodb.yaml
+  - weather-mcp.yaml
+  - backend.yaml
+  - web.yaml

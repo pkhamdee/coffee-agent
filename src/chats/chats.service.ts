@@ -10,11 +10,15 @@ import {
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { RunnableConfig } from '@langchain/core/runnables';
 
-import { ChatOllama } from '@langchain/ollama';
 import { StateGraph, Annotation, START, END } from '@langchain/langgraph';
 import { MongoDBSaver } from '@langchain/langgraph-checkpoint-mongodb';
 
 import { Order } from './schemas/order.schema';
+import { ModelConfigService } from 'src/settings/model-config.service';
+import {
+  ShopWeather,
+  WeatherClientService,
+} from 'src/mcp/weather/weather-client.service';
 import { DRINKS } from 'src/lib/utils/constants/menu_data';
 import {
   extractJsonResponse,
@@ -37,6 +41,20 @@ import {
 
 const CHECKPOINT_DB_NAME = 'drinks_db';
 
+/** Turns shop weather into a drink-suggestion instruction for the prompt. */
+function weatherSuggestion(w: ShopWeather | null): string {
+  if (!w) return '';
+  const feelsLike = Math.round(w.feelsLikeC);
+  const advice =
+    feelsLike >= 28
+      ? 'It is hot — when asking which drink, warmly suggest a cold one (Cold Brew or Frappuccino).'
+      : feelsLike <= 18 || w.isRaining
+        ? 'It is cool or rainy — when asking which drink, warmly suggest a hot one (Latte or Cappuccino).'
+        : 'The weather is mild — you may mention it casually when asking which drink.';
+  // No braces in this text, so it is safe inside the prompt template.
+  return `\n**WEATHER AT THE CAFÉ (live, via MCP)**\n${w.city}: ${Math.round(w.temperatureC)}°C, feels like ${feelsLike}°C, ${w.condition}. ${advice} Mention the weather only while the customer is choosing a drink.`;
+}
+
 const GraphState = Annotation.Root({
   messages: Annotation<BaseMessage[]>({
     reducer: (x, y) => [...x, ...y],
@@ -48,21 +66,13 @@ export class ChatService {
   private readonly agent: ReturnType<
     InstanceType<typeof StateGraph<any, any, any, any>>['compile']
   >;
-  private readonly llm: ChatOllama;
 
   constructor(
     @InjectModel(Order.name) private orderModel: Model<Order>,
     @InjectConnection() private connection: Connection,
+    private readonly modelConfig: ModelConfigService,
+    private readonly weatherClient: WeatherClientService,
   ) {
-    this.llm = new ChatOllama({
-      model: process.env.OLLAMA_MODEL || 'qwen2.5:7b',
-      temperature: 0,
-      baseUrl: (
-        process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
-      ).replace('/v1', ''),
-      format: 'json',
-    });
-
     // Reuse the Mongoose connection's underlying driver client for LangGraph
     // checkpoints instead of opening a second connection.
     const checkpointer = new MongoDBSaver({
@@ -128,6 +138,12 @@ export class ChatService {
         ? `Your next task is to warmly ask for ONE thing only — the FIRST item in this list:\n${stillNeeded.map((f, i) => `  ${i + 1}. ${f}`).join('\n')}\nDo NOT ask for anything else in this turn.`
         : 'All details are collected. Warmly read back the full order summary and ask the customer to confirm. Set progress "completed" only after they explicitly say yes.';
 
+    // Live weather from the Weather MCP server — only used while the customer
+    // is still choosing a drink, so it can't derail the rest of the order.
+    const weatherInstruction = knownOrder.drink
+      ? ''
+      : weatherSuggestion(await this.weatherClient.getShopWeather());
+
     const prompt = ChatPromptTemplate.fromMessages([
       {
         role: 'system',
@@ -153,6 +169,7 @@ ${knownOrderJson}
 
 **YOUR NEXT TASK**
 ${nextFieldInstruction}
+${weatherInstruction}
 
 **RULES**
 - Ask the Customer's name, you can not finish without it.
@@ -175,7 +192,7 @@ ${nextFieldInstruction}
       messages: state.messages.slice(sessionStart),
     });
 
-    const result = await this.llm.invoke(formattedPrompt);
+    const result = await this.modelConfig.getLlm().invoke(formattedPrompt);
     return { messages: [result] };
   }
 

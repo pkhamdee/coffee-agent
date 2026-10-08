@@ -1,0 +1,12 @@
+.env
+.env.*
+.git
+node_modules
+dist
+client
+mcp-weather-server
+mongodb
+k8s
+tasks
+graphify-out
+*.md

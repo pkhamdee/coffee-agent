@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { sendMessage } from './api';
 import type { ChatMessage, Order, ApiResponse } from './types';
 import MessageBubble from './components/MessageBubble';
@@ -108,12 +109,20 @@ export default function App() {
               <p className="text-xs text-green-300 mt-0.5">Powered by AI</p>
             </div>
           </div>
-          <button
-            onClick={handleNewOrder}
+          <div className="flex items-center gap-2">
+            <Link
+            to="/setup"
             className="text-xs px-3 py-1.5 rounded-full border border-white/30 text-white/70 hover:bg-white/10 transition-colors"
           >
-            New Order
-          </button>
+            Setup
+          </Link>
+            <button
+              onClick={handleNewOrder}
+              className="text-xs px-3 py-1.5 rounded-full border border-white/30 text-white/70 hover:bg-white/10 transition-colors"
+            >
+              New Order
+            </button>
+          </div>
         </header>
 
         {/* Messages */}
